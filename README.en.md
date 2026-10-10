@@ -92,38 +92,75 @@ half, and DYA Studio will only ever see the left half.
 
 | | Left · central | Right · peripheral |
 | --- | --- | --- |
+| **Which firmware to flash** | **`corne_left*`** | **`corne_right*`** |
 | USB / BLE connection | yes | — |
 | Studio communication | yes | — |
 | Connection management, OS detection, per-OS layers | yes | — |
 | Settings relay | originates | receives and applies |
 | Chatter diagnostics, watchdog | aggregates both halves | measures and reports its own half |
 
-> ZMK's convention is to put the central on the right. If your cable is on the right,
-> change `SHIELD_CORNE_LEFT` to `SHIELD_CORNE_RIGHT` in
-> `boards/shields/corne/Kconfig.defconfig` and swap the module ownership between the two
-> conf files.
+This matches ZMK's own corne shield (and `cormoran/zmk`'s `main+dya` branch):
+`boards/shields/corne/Kconfig.defconfig` contains `if SHIELD_CORNE_LEFT →
+ZMK_SPLIT_ROLE_CENTRAL default y`. **ZMK's corne puts the central on the left, not
+the right.**
+
+> ⚠️ **Flashing the wrong half leaves the board with no input at all** (central and
+> peripheral no longer pair). Remember: **the half your USB cable goes into is the
+> left one, so flash `corne_left*`.**
+>
+> If your wiring really does put USB on the right half, change three things
+> together:
+> 1. `SHIELD_CORNE_LEFT` → `SHIELD_CORNE_RIGHT` in `Kconfig.defconfig`;
+> 2. rename the two snippet directories (`corne-central` ↔ `corne-peripheral`)
+>    and update the names in each variant's `snippets:` list in `build.yaml`;
+> 3. swap `shield:` and `artifact:` for every variant in `build.yaml`.
 
 ### Studio locking
 
-The default firmware locks Studio after disconnecting; reconnecting requires holding a
-key to unlock. If it is only you using the board and you do not mind others changing your
-settings, flash a `*_studio_unlocked` variant to disable the lock.
+**The default firmware locks Studio**: it locks on disconnect and re-locks after
+600 s idle. While locked, browser Web Bluetooth **cannot see the keyboard** — press
+the unlock key first:
+
+```
+Enter RAISE : the 7th key of LAYER_0 (right thumb #2) — tap for backspace, hold for RAISE
+Unlock      : left thumb #1 on RAISE (the GUI key)
+Backup      : left thumb #3 on ADJUST (the SPC key)
+```
+
+If it is only you using the board and you do not mind others changing your settings,
+flash a `*_studio_unlocked` variant to disable the lock.
+
+> Layer navigation (every layer also has an `&mo 0` escape hatch):
+> LAYER_0 → LOWER with left thumb #2; LAYER_0 → RAISE with right thumb #2;
+> RAISE → ADJUST with left thumb #2; LOWER + RAISE together jumps to ADJUST.
+> The rightmost thumb key of LOWER / RAISE / ADJUST is `&mo 0`, which momentarily
+> returns to LAYER_0 — so even if a layer is set as the base layer from DYA Studio,
+> you can never get locked out of it.
+> USB / BLE output switching lives on ADJUST (`&out OUT_TOG`); avoid `&out OUT_USB`,
+> because once you switch to it without a cable plugged in the board produces no
+> output at all.
 
 ## Firmware variants
 
 Actions → latest build → Artifacts → `zmk-firmware`, containing these `.uf2` files:
 
-| Artifact | Description | Size |
-| --- | --- | --- |
-| `corne_left` / `corne_right` | **No display**, most flash headroom — the everyday pick | 458 / 374 KB |
-| `corne_left_oled` / `corne_right_oled` | SSD1306 OLED display | 726 / 641 KB |
-| `corne_left_niceview` / `corne_right_niceview` | nice!view adapter board | 781 / 627 KB |
-| `corne_left_studio_unlocked` / `corne_right_studio_unlocked` | No display, Studio always unlocked | 458 / 374 KB |
-| `settings_reset` | Wipes all persisted settings, including DYA Studio's | 103 KB |
+| Artifact | Description | UF2 size | flash used |
+| --- | --- | --- | --- |
+| `corne_left` / `corne_right` | **No display**, most headroom — the everyday pick | 694 / 420 KB | 44% / 27% |
+| `corne_left_oled` / `corne_right_oled` | SSD1306 OLED display | 963 / 688 KB | 62% / 45% |
+| `corne_left_niceview` / `corne_right_niceview` | nice!view adapter board | 1013 / 674 KB | **66%** / 44% |
+| `corne_left_studio_unlocked` / `corne_right_studio_unlocked` | No display, Studio always unlocked | 694 / 420 KB | 44% / 27% |
+| `settings_reset` | Wipes all persisted settings, including DYA Studio's | 102 KB | 7% |
 
-Sizes are UF2 file sizes. nice!nano has 1 MB of internal flash and all nine variants fit.
-The two display variants have the least headroom, so prefer the no-display build if you
-want to add more features later.
+Sizes are UF2 file sizes. nice!nano v2 has 2 MB of flash and ZMK builds against a
+1 MB partition, so all nine variants fit. The two display variants have the least
+headroom, so prefer the no-display build if you want to add more features later.
+
+**To skip the unlock dance, flash `*_studio_unlocked`.** Those variants carry
+`-DCONFIG_ZMK_STUDIO_LOCKING=n` in `build.yaml`. That argument was verified to
+work: `.config` shows `# CONFIG_ZMK_STUDIO_LOCKING is not set` and flash usage
+drops by 144 bytes. The difference is small enough that the UF2 files keep the
+same size, so check the hash or `.config` rather than the file size.
 
 Flash the matching file to each half. After flashing `settings_reset`, flash the normal
 firmware again.
@@ -141,7 +178,14 @@ Both display variants map to a header on the PCB — pick one:
 Requires the [Zephyr SDK](https://docs.zephyrproject.org/latest/develop/toolchains/index.html)
 and [`west`](https://docs.zephyrproject.org/latest/develop/west/install.html).
 
+You need **Python 3.12** (Zephyr 4.1 does not support 3.13/3.14) and Zephyr SDK
+0.17.0:
+
 ```bash
+brew install python@3.12
+python3.12 -m venv .venv && ./.venv/bin/pip install west
+export ZEPHYR_SDK_INSTALL_DIR=~/zephyr-sdk-0.17.0
+
 # Dependencies go to ./dependencies
 west init -l config
 # Or into the parent directory (several config repos sharing one ZMK checkout)
@@ -149,35 +193,137 @@ west init -l config
 
 west update --narrow
 west zephyr-export
+# Studio's nanopb generator needs these two, otherwise proto generation fails
+./.venv/bin/pip install "protobuf>=5.27" grpcio-tools
+
 west zmk-build                 # build every variant in build.yaml
 west zmk-build -a corne_right  # build a single variant
-west zmk-build --flash         # build, then flash
+
+# Flashing requires a single target (with several, --flash exits with an error)
+west zmk-build -a corne_left --flash
+
+# While debugging: build a variant with USB logging (costs flash, daily builds unaffected)
+west zmk-build -a corne_left -S zmk-usb-logging --flash
 ```
 
 Firmware lands in `./build/<artifact>/zephyr/zmk.uf2`.
+
+## Troubleshooting
+
+A successful build does not mean every feature got enabled. The classic example: if
+DYA Studio's Kconfig is not actually loaded, the firmware still builds and types
+fine, but the whole Studio RPC stack never gets linked in — which looks exactly
+like "Studio won't connect".
+
+**1. Check the build log for Kconfig warnings — this repo currently has none.**
+Every `assigned the value 'y' but got 'n'` means some feature did not get enabled;
+the warning names the symbol:
+
+```bash
+grep -iE "warning: (assigned|attempt to assign|choice symbol)" \
+  build/corne_left/stdout_and_stderr.log
+```
+
+**2. Confirm which `.conf` files the build actually merged.** This is the fastest
+way to find "my config was never read": if the list shows
+`dependencies/zmk/app/boards/shields/corne/corne_left.conf` (an empty file in the
+ZMK fork) instead of this repo's snippet, the config was never picked up.
+
+```bash
+grep -oE "[^ ']*\.conf" build/corne_left/stdout_and_stderr.log | sort -u
+```
+
+A correct run shows `snippets/corne-central/corne-central.conf` in that list.
+
+**2. Verify the effective `.config`.** All of the following must be `y`; a single
+`n` means that feature is off. The most critical one is
+`ZMK_BEHAVIOR_LOCAL_ID_TYPE_CRC16`: it must match what the DYA Studio web UI
+computes, otherwise the IDs behind Macros / Combos / Keymap Editor writes do not
+line up with the existing bindings and edits appear to do nothing.
+
+```bash
+grep -E "ZMK_STUDIO|PHYSICAL_LAYOUTS|FAST_KEYMAP|KSCAN_DIAG|WATCHDOG|OS_DETECTION|DEFAULT_LAYER|BLE_MANAGEMENT|RUNTIME_(MACRO|COMBO|INPUT)|INPUT_STREAM|DEVICE_INFO|LOCAL_ID_TYPE" \
+  build/corne_left/zephyr/.config | grep -v "=n$"
+```
+
+**3. Capture device logs.** Daily builds turn off `CONFIG_CONSOLE` to save flash;
+use `-S zmk-usb-logging` when you need logs.
+
+**4. No input at all?** First confirm you did not flash the halves swapped: the
+half your USB cable is in must be running `corne_left*`.
 
 ## Repository layout
 
 ```
 config/
   corne.keymap            Key definitions (layered, with ASCII layout comments)
-  corne.json              Physical layout description for keymap-editor
-  corne.conf              Shared config (BT power, underglow switch)
+  corne.json              Layout description for external keymap-editor / keymap-drawer
+                          (it is not compiled, and it does not decide the keyboard
+                          drawing in DYA Studio — that comes from the physical-layout
+                          built into the ZMK fork)
+  corne.conf              Kconfig shared by both halves (BT, battery, sleep, stacks)
   west-dependency.yml     Dependency list: ZMK fork + DYA Studio module stack
   west.yml                Default west entry point
   west-isolated.yml       Dependencies land in ./dependencies
   west-workspace.yml      Dependencies land in the west topdir
 boards/shields/corne/
-  Kconfig.defconfig       Keyboard name, split role (central = left)
+  Kconfig.defconfig       Keyboard name, split role (central = left) and
+                          inherited upstream defaults only
   Kconfig.shield          Shield identification
-  boards/                 Board-level overlay (nice!nano)
-  corne_left.conf         Full Kconfig for the left half (central)
-  corne_right.conf        Full Kconfig for the right half (peripheral)
 snippets/
+  corne-central/          Left half (central) only: ZMK Studio and every
+                          *_STUDIO_RPC, OS detection, default layer, connection
+                          management, the extension modules
+  corne-peripheral/       Right half (peripheral) only: receives and applies
+                          relayed settings
   corne-oled/             OLED display
   corne-no-display/       Disables the on-board OLED to reclaim flash
 zephyr/module.yml         Tells west where to find boards / snippets
 build.yaml                Build matrix
+```
+
+> `corne.dtsi`, `corne_left.overlay`, `corne_right.overlay` and the physical layout
+> (`foostan_corne_6col_layout`) all come from `cormoran/zmk`'s `main+dya` branch;
+> this repo does not redefine them.
+
+### Splitting config per half: why snippets instead of `<shield>.conf`
+
+DYA Studio's Kconfig must be isolated per half — the `*_STUDIO_RPC` protobuf stubs
+are only generated on the central, so enabling them on the right half breaks the
+build with a missing `proto/zmk/custom.pb.h`. This repo does that isolation through
+the `snippets:` list of each variant in `build.yaml`:
+
+| File | Scope | Contents |
+| --- | --- | --- |
+| `Kconfig.defconfig` | shield | Keyboard name, split role, inherited `ZMK_SPLIT` / display / LVGL |
+| `snippets/corne-central` | left half only | Studio / RPC / OS detection / default layer / extension modules |
+| `snippets/corne-peripheral` | right half only | Receiving and applying relayed settings only |
+| `config/corne.conf` | both halves | Bluetooth, battery, sleep, split event relay, thread stacks |
+
+**The trap we hit: putting this in `boards/shields/corne/corne_left.conf` does not
+work.** Zephyr resolves `SHIELD_ROOT` to the *first* board root containing the
+shield, and ZMK's `app/boards` comes first, so the build log shows
+
+```
+dependencies/zmk/app/boards/shields/corne/corne_left.conf   ← an empty file in the fork
+```
+
+instead of the repo's copy. `Kconfig.defconfig` works only because Zephyr
+`osource`s *every* board root. There are therefore only two ways to isolate config
+per half:
+
+1. `Kconfig.defconfig` with `default y` (what this repo used to do — it works, but
+   an unmet dependency is dropped **silently, with no warning**, which easily
+   produces "it compiles but the feature is off");
+2. **snippets** (what this repo does now, via `EXTRA_CONF_FILE`, verified working).
+   Those are explicit assignments, so unmet dependencies produce a clear warning,
+   and they are isolated per half by construction.
+
+The fastest way to check this is to look at which `.conf` files the build actually
+merged:
+
+```bash
+grep -oE "[^ ']*\.conf" build/corne_left/stdout_and_stderr.log | sort -u
 ```
 
 ## Where the dependencies come from

@@ -1,0 +1,3 @@
+name: corne-peripheral
+append:
+  EXTRA_CONF_FILE: corne-peripheral.conf

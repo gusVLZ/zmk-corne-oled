@@ -1,3 +1,23 @@
+# Corne shield 的 Kconfig 补丁
+#
+# ⚠️ 这里**只保留**与"这块板是什么"有关的符号：键盘名、分体角色，以及
+#   从 ZMK 上游继承下来的 ZMK_SPLIT / 显示 / LVGL 默认值。
+#   所有功能开关（ZMK Studio、OS 识别、默认层、各扩展模块……）都不在这里，
+#   而是按半边拆到 shield 目录的 .conf 文件：
+#
+#     boards/shields/corne/corne_left.conf    左手 = central，Studio 及全部 RPC
+#     boards/shields/corne/corne_right.conf   右手 = peripheral，只接收/应用设置
+#     config/corne.conf                       两半共用
+#
+# 为什么不用 `default y`：
+# 1) defconfig 里的 default 是弱默认值，符号的 depends on 不满足时会被
+#    **静默丢弃且不产生任何警告** —— 这正是"编译通过但功能没打开"的成因；
+# 2) ZMK 按 shield 名自动应用 <shield_root>/<shield>.conf，.conf 是显式赋值，
+#    依赖不满足时会明确报 "assigned the value 'y' but got 'n'" 警告；
+#    构建日志里的这类警告必须清零，出现即代表配置写错了。
+# 3) *_STUDIO_RPC 依赖的 protobuf 桩代码只在 central 生成。
+#    <shield>.conf 天然按半边隔离，不会误开到外设半边。
+
 if SHIELD_CORNE_LEFT
 
 # 本键盘的 central（主控）接在左手：左手负责 USB / BLE 与 Studio 通信
@@ -7,126 +27,6 @@ config ZMK_KEYBOARD_NAME
 
 config ZMK_SPLIT_ROLE_CENTRAL
     default y
-
-# ---------------------------------------------------------------------------
-# central（左手）专属：Studio / RPC / OS 识别 / 默认层
-#
-# 这些只能以 defaults 形式放在这里，而不是 config/corne.conf：
-#  - corne.conf 对两半同时生效，而外设半边没有 ZMK_STUDIO_RPC
-#    （protobuf 只在 central 生成），强开 *_STUDIO_RPC 会因缺少
-#    proto/zmk/custom.pb.h 编译失败；
-#  - 本文件经 Kconfig osource 加载，defaults 在无其他赋值时生效。
-# ---------------------------------------------------------------------------
-
-# ZMK Studio
-config ZMK_STUDIO
-    default y
-
-# 分体电量代理（central 从外设读取电量后统一上报）
-# 放到这里而不是 corne.conf：外设半边 ZMK_SPLIT_ROLE_CENTRAL=n，
-# 在 conf 里赋值会触发 "assigned the value 'y' but got ''" 的 Kconfig 警告。
-config ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_PROXY
-    default y
-config ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING
-    default y
-
-# central 的 split 运行栈（外设半边无此符号依赖，故同样放这里）
-config ZMK_SPLIT_BLE_CENTRAL_SPLIT_RUN_STACK_SIZE
-    default 768
-
-# OS 识别：按主机自动切换默认层
-# https://github.com/cormoran/zmk-feature-os-detection
-config ZMK_OS_DETECTION
-    default y
-config ZMK_OS_DETECTION_USB
-    default y
-config ZMK_OS_DETECTION_BLE
-    default y
-config ZMK_OS_DETECTION_STUDIO_RPC
-    default y
-
-# 默认层模块（闭区间 0-3，共 4 层）
-# https://github.com/cormoran/zmk-feature-default-layer
-config ZMK_DEFAULT_LAYER
-    default y
-config ZMK_DEFAULT_LAYER_MIN_INDEX
-    default 0
-config ZMK_DEFAULT_LAYER_MAX_INDEX
-    default 3
-config ZMK_DEFAULT_LAYER_STUDIO_RPC
-    default y
-config ZMK_DEFAULT_LAYER_OS_DETECTION
-    default y
-
-# 连接管理：BLE 配置档重命名 / 切换 / 解绑，USB 与蓝牙优先级
-# https://github.com/cormoran/zmk-module-ble-management
-config ZMK_BLE_MANAGEMENT
-    default y
-config ZMK_BLE_MANAGEMENT_STUDIO_RPC
-    default y
-
-# Studio RPC 的各模块扩展
-config ZMK_SETTINGS_RPC_STUDIO
-    default y
-config ZMK_CUSTOM_SETTINGS_STUDIO_RPC
-    default y
-config ZMK_PHYSICAL_LAYOUTS_FEATURE
-    default y
-config ZMK_PHYSICAL_LAYOUTS_FEATURE_STUDIO_RPC
-    default y
-config ZMK_INPUT_STREAM_FEATURE
-    default y
-config ZMK_INPUT_STREAM_FEATURE_STUDIO_RPC
-    default y
-config ZMK_FAST_KEYMAP
-    default y
-config ZMK_FAST_KEYMAP_STUDIO_RPC
-    default y
-config ZMK_FAST_KEYMAP_DEFAULT_LAYER
-    default y
-config ZMK_RUNTIME_MACRO
-    default y
-config ZMK_RUNTIME_MACRO_STUDIO_RPC
-    default y
-# 行为本地 ID 编码方式是一个 choice，必须用 choice 块设默认值：
-# 直接给 choice 成员（ZMK_BEHAVIOR_LOCAL_ID_TYPE_CRC16）写 default 会触发
-# Zephyr 4.1 的 "default on the choice symbol" 致命警告，导致所有目标
-# Kconfig 阶段直接中止（含 settings_reset）。
-choice ZMK_BEHAVIOR_LOCAL_ID_TYPE
-    default ZMK_BEHAVIOR_LOCAL_ID_TYPE_CRC16
-endchoice
-config ZMK_RUNTIME_COMBO
-    default y
-config ZMK_RUNTIME_COMBO_STUDIO_RPC
-    default y
-config ZMK_DEVICE_INFO
-    default y
-config ZMK_DEVICE_INFO_STUDIO_RPC
-    default y
-config ZMK_KSCAN_DIAGNOSTICS
-    default y
-config ZMK_KSCAN_DIAGNOSTICS_STUDIO_RPC
-    default y
-config ZMK_KSCAN_DIAGNOSTICS_SPLIT
-    default y
-config ZMK_WATCHDOG
-    default y
-config ZMK_WATCHDOG_STUDIO_RPC
-    default y
-config ZMK_WATCHDOG_SPLIT_RELAY
-    default y
-config ZMK_WATCHDOG_FREEZE_DETECT
-    default y
-
-# Studio RPC 专属缓冲 / 栈
-config ZMK_STUDIO_RPC_RX_BUF_SIZE
-    default 256
-config ZMK_STUDIO_RPC_TX_BUF_SIZE
-    default 256
-config ZMK_STUDIO_RPC_CUSTOM_SUBSYSTEM_REQUEST_PAYLOAD_MAX_BYTES
-    default 256
-config ZMK_STUDIO_RPC_THREAD_STACK_SIZE
-    default 6000
 
 endif
 
