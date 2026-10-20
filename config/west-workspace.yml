@@ -1,4 +1,4 @@
-# 依赖下载到 west topdir（仓库的上一级），多个 config 仓库共享同一份 ZMK
+# Dependencies are fetched into the west topdir (the repo's parent); multiple config repos share one ZMK checkout
 #   west init -l . --mf config/west-workspace.yml
 manifest:
   self:

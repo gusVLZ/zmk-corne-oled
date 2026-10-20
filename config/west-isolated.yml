@@ -1,4 +1,4 @@
-# 依赖下载到 <仓库>/dependencies
+# Dependencies are fetched into <repo>/dependencies
 #   west init -l config --mf west-isolated.yml
 manifest:
   self:

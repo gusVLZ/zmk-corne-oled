@@ -1,28 +1,28 @@
-# Corne shield 的 Kconfig 补丁
+# Kconfig patch for the Corne shield
 #
-# ⚠️ 这里**只保留**与"这块板是什么"有关的符号：键盘名、分体角色，以及
-#   从 ZMK 上游继承下来的 ZMK_SPLIT / 显示 / LVGL 默认值。
-#   所有功能开关（ZMK Studio、OS 识别、默认层、各扩展模块……）都不在这里，
-#   而是按半边拆到 shield 目录的 .conf 文件：
+# ⚠️ Only symbols about "what this board is" are kept here: keyboard name, split role, and
+#   the ZMK_SPLIT / display / LVGL defaults inherited from upstream ZMK.
+#   All feature switches (ZMK Studio, OS detection, default layer, extension modules...) are not here,
+#   but split per half into the .conf files:
 #
-#     boards/shields/corne/corne_left.conf    左手 = central，Studio 及全部 RPC
-#     boards/shields/corne/corne_right.conf   右手 = peripheral，只接收/应用设置
-#     config/corne.conf                       两半共用
+#     boards/shields/corne/corne_left.conf    left = central: Studio and all RPC
+#     boards/shields/corne/corne_right.conf   right = peripheral: receives/applies settings only
+#     config/corne.conf                       shared by both halves
 #
-# 为什么不用 `default y`：
-# 1) defconfig 里的 default 是弱默认值，符号的 depends on 不满足时会被
-#    **静默丢弃且不产生任何警告** —— 这正是"编译通过但功能没打开"的成因；
-# 2) ZMK 按 shield 名自动应用 <shield_root>/<shield>.conf，.conf 是显式赋值，
-#    依赖不满足时会明确报 "assigned the value 'y' but got 'n'" 警告；
-#    构建日志里的这类警告必须清零，出现即代表配置写错了。
-# 3) *_STUDIO_RPC 依赖的 protobuf 桩代码只在 central 生成。
-#    <shield>.conf 天然按半边隔离，不会误开到外设半边。
+# Why not `default y`:
+# 1) A default in defconfig is a weak default; when a symbol's depends on is unmet it is
+#    **silently dropped with no warning at all** — exactly the cause of "it compiles but the feature is off";
+# 2) ZMK applies <shield_root>/<shield>.conf automatically by shield name; .conf is an explicit assignment,
+#    and an unmet dependency clearly warns "assigned the value 'y' but got 'n'";
+#    such warnings in the build log must be zero — any occurrence means the config is wrong.
+# 3) The protobuf stubs that *_STUDIO_RPC depends on are generated on the central only.
+#    <shield>.conf is naturally isolated per half, so it cannot leak onto the peripheral half.
 
 if SHIELD_CORNE_LEFT
 
-# 本键盘的 central（主控）接在左手：左手负责 USB / BLE 与 Studio 通信
+# This keyboard's central (master) half is the left one: the left handles USB / BLE and Studio communication
 config ZMK_KEYBOARD_NAME
-    # 蓝牙设备名限制 16 字节
+# Bluetooth device name is limited to 16 bytes
     default "Corne DYA"
 
 config ZMK_SPLIT_ROLE_CENTRAL
@@ -35,7 +35,7 @@ if SHIELD_CORNE_LEFT || SHIELD_CORNE_RIGHT
 config ZMK_SPLIT
     default y
 
-# 以下默认项来自 ZMK 上游 corne shield，本地覆盖时不能丢掉
+# The defaults below come from ZMK's upstream corne shield and must not be dropped by local overrides
 if ZMK_DISPLAY
 
 config I2C

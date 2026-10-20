@@ -11,7 +11,7 @@ on:
         description: "创建 Release，填入版本号如 v1.0.0（留空则只构建）"
         required: false
   schedule:
-    # 每周五 20:00 JST (11:00 UTC) 验证一次上游变更
+    # Verify upstream changes every Friday 20:00 JST (11:00 UTC)
     - cron: '0 11 * * 5'
 
 jobs:
@@ -88,7 +88,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  # 保证定时任务不会自动停用
+  # Keep the scheduled workflow from being auto-disabled
   keepalive:
     if: ${{ github.event_name == 'schedule' }}
     permissions:

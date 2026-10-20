@@ -9,19 +9,19 @@ manifest:
     - name: zmkfirmware
       url-base: https://github.com/zmkfirmware
   projects:
-    # 编译命令扩展：提供 `west zmk-build` 等命令
+    # Build command extension: provides `west zmk-build` and friends
     - name: zmk-west-commands
       import: true
 
-    # ZMK 主仓库：使用 cormoran 的 fork，main+dya 分支
-    # 该分支 = ZMK main + 自定义 Studio RPC 协议 + 所有 DYA Studio 所需固件改动
+    # ZMK main repo: uses cormoran's fork, main+dya branch
+    # That branch = ZMK main + custom Studio RPC protocol + every firmware change DYA Studio needs
     - name: zmk
       import:
         file: app/west.yml
       clone-depth: 1
       revision: main+dya
 
-    # Zephyr 使用带 nRF 半双工 UART 支持的分支
+    # Zephyr: use the branch with nRF half-duplex UART support
     - name: zephyr
       revision: v4.1.0+zmk-fixes+nrf-half-duplex-uart
       clone-depth: 1
@@ -46,43 +46,43 @@ manifest:
           - trusted-firmware-m
 
     # ---------------------------------------------------------------------
-    # DYA Studio 扩展模块栈
-    # 每一项对应 DYA Studio Web UI 上的一个功能页面
+    # DYA Studio extension module stack
+    # Each entry maps to one feature page in the DYA Studio web UI
     # ---------------------------------------------------------------------
 
-    # 连接管理：BLE 配置档重命名 / 切换 / 解绑
+    # Connection management: BLE profile rename / switch / unpair
     - name: zmk-module-ble-management
-    # 设备设置：电源管理、Zephyr settings 的读写
+    # Device settings: power management, Zephyr settings read/write
     - name: zmk-module-settings-rpc
-    # 自定义设置：让普通 Zephyr setting 可在网页上编辑
+    # Custom settings: expose plain Zephyr settings for web editing
     - name: zmk-feature-custom-settings
-    # 主机 OS 识别（Windows / macOS / Linux / iOS / Android）
+    # Host OS detection (Windows / macOS / Linux / iOS / Android)
     - name: zmk-feature-os-detection
-    # 按连接目标 / 按 OS 自动切换默认层
-    # 注意：default-layer 的 main 分支落后于 DYA2 实际使用的分支，
-    # 这里与 zmk-keyboard-dya2 保持一致
+    # Auto-switch the default layer per peer / per OS
+    # Note: default-layer's main branch lags behind the branch DYA2 actually uses,
+    # so this pins the same revision as zmk-keyboard-dya2
     - name: zmk-feature-default-layer
       revision: codex/custom-rpc-rewrite
       import: true
-    # 运行时宏：无需重编译即可在网页创建宏
+    # Runtime macros: create macros on the web without rebuilding
     - name: zmk-feature-runtime-macro
-    # 运行时组合键
+    # Runtime combos
     - name: zmk-feature-runtime-combo
-    # 输入流：实时回传按键事件（DYA Studio 按键高亮）
+    # Input stream: stream key events in real time (DYA Studio key highlighting)
     - name: zmk-feature-input-stream
-    # 物理布局：DYA Studio 用它在网页上正确绘制键盘
+    # Physical layout: lets DYA Studio draw the keyboard correctly on the web
     - name: zmk-feature-module-physical-layout
-    # 输入处理器：鼠标 / 滚轮 / 滚动的运行时调节
+    # Input processors: runtime tuning of mouse / wheel / scrolling
     - name: zmk-module-runtime-input-processor
-    # 快速键位图：增量同步键位，减少大数据量传输
+    # Fast keymap: incremental keymap sync, avoiding large data transfers
     - name: zmk-feature-fast-keymap
-    # 设备信息：固件版本、uptime、分半信息
+    # Device info: firmware version, uptime, per-half information
     - name: zmk-feature-device-info
-    # 抖键诊断：逐键抖动检测
+    # Chatter diagnostics: per-key debounce detection
     - name: zmk-feature-kscan-diagnostics
-    # 看门狗：死机记录
+    # Watchdog: freeze logging
     - name: zmk-feature-watchdog
-    # 电池历史曲线
+    # Battery history chart
     - name: zmk-module-battery-history
 
   self:

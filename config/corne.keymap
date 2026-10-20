@@ -18,7 +18,7 @@
     conditional_layers {
         compatible = "zmk,conditional-layers";
 
-        // LOWER + RAISE 同按 -> ADJUST（F 键 / 媒体 / 蓝牙管理层）
+        // Press LOWER + RAISE together -> ADJUST (F keys / media / Bluetooth management layer)
         tri_layer {
             if-layers = <LOWER RAISE>;
             then-layer = <ADJUST>;
@@ -35,7 +35,7 @@
             // | SHFT |  Z  |  X  |  C  |  V  |  B      |   |  N         |  M         |  ,  |  .  |  /  | SHFT |
             //                    | GUI | LWR |  SPC    |   | ENT        | BKSP/RSE   | ALT |
             //
-            // 右侧第 2 枚拇指键（ENT 右边）：点按 = 退格，按住 = RAISE 层
+            // Right-hand 2nd thumb key (to the right of ENT): tap = backspace, hold = RAISE layer
 
             bindings = <
 &kp TAB    &kp Q  &kp W  &kp E     &kp R  &kp T        &kp Y      &kp U            &kp I      &kp O    &kp P     &kp BSPC
@@ -52,10 +52,10 @@
             // | SHFT |     |     |     |     |       |   |     |     |     |     |     |      |
             //                    | GUI |     | SPC   |   | ENT |     | BASE |
             //
-            // BASE = &mo 0，按住临时回到 LAYER_0。
-            // DYA Studio 的 Default Layer 面板可以把这层设成基础层，一旦被设成
-            // 基础层，本层原本全是 &trans 的拇指键区就会变成"死区"——既回不到
-            // RAISE（拿不到 &studio_unlock），也进不了 ADJUST。留一个 &mo 0 兜底。
+            // BASE = &mo 0, hold to temporarily return to LAYER_0.
+            // DYA Studio's Default Layer panel can set this layer as the base layer. Once
+            // that happens, the thumb area of this layer (all &trans) becomes a dead zone:
+            // no way back to RAISE (no &studio_unlock), no way into ADJUST. Keep an &mo 0 fallback.
 
             bindings = <
 &kp ESCAPE  &kp N1    &kp N2    &kp N3  &kp N4     &kp N5    &kp N6  &kp N7        &kp N8      &kp N9        &kp N0  &trans
@@ -72,16 +72,16 @@
             // | SHFT | OUT |     |     |     |     |   |  _  |  +  |  {  |  }  | "|" |  ~   |
             //                    | STUDIO | ->ADJ |     |   | ENT |     | BASE |
             //
-            // 左侧第 1 枚拇指键：解锁 DYA Studio；第 2 枚：按住进入 ADJUST 层；
-            // 最右 1 枚：&mo 0，按住临时回到 LAYER_0（RAISE 被设成基础层时的逃生口）。
+            // Left-hand 1st thumb key: unlock DYA Studio; 2nd: hold to enter the ADJUST layer;
+            // rightmost: &mo 0, hold to briefly return to LAYER_0 (escape hatch when RAISE is the base layer).
             //
-            // 进入方式：LAYER_0 的第 7 枚键（右手第 2 枚拇指键，&lt 2）短按退格、
-            // 长按进本层；也可以 LOWER + RAISE 同按（conditional layer）直接到 ADJUST。
+            // How to enter: LAYER_0 key #7 (right-hand 2nd thumb key, &lt 2): tap = backspace,
+            // hold = this layer; you can also press LOWER + RAISE together (conditional layer) to go straight to ADJUST.
             //
-            // ⚠️ 输出切换（USB / BLE）已挪到 ADJUST 层，并从 `&out OUT_USB` 改成
-            //    `&out OUT_TOG`。原来的 OUT_USB 是粘滞的：按过去以后只要没插线，
-            //    键盘就完全没有输出（蓝牙输出被停掉），表现成"键盘突然坏了"；
-            //    而 RAISE 层只有一个入口，几乎没法改回来。OUT_TOG 来回切，不会卡死。
+            // ⚠️ Output switching (USB / BLE) was moved to the ADJUST layer, and `&out OUT_USB` changed to
+            //    `&out OUT_TOG`. The old OUT_USB was sticky: once pressed, if no cable is plugged in,
+            //    the keyboard has no output at all (BLE output is stopped), looking like "the keyboard suddenly broke";
+            //    and RAISE has only one way in, almost no way back. OUT_TOG toggles both ways, never dead-ends.
 
             bindings = <
 &trans  &kp EXCL     &kp AT        &kp HASH      &kp DLLR      &kp PRCNT    &kp CARET  &kp AMPS   &kp ASTERISK  &kp LPAR  &kp RPAR  &kp DEL
@@ -98,17 +98,17 @@
             // | bri-|    |    |    |    | BT1 |   | BT2 |     |     |     |     | BTCLR |
             //                      | BTLDR | OUT | UNLK |     |     | BASE |
             //
-            // 进入方式：LOWER + RAISE 同按（conditional layer），或 RAISE 中按住左侧
-            // 第 2 枚拇指键。
+            // How to enter: press LOWER + RAISE together (conditional layer), or hold the left-hand
+            // 2nd thumb key while in RAISE.
             //
-            // BTLDR = 进 bootloader；放在最左侧 GUI 位，不易误触。
-            // OUT   = &out OUT_TOG，在 USB / BLE 之间来回切。**不要**用 &out OUT_USB：
-            //         它是粘滞的，切过去以后没插线就完全没有输出，键盘会"哑掉"，
-            //         而从 ADJUST 层很难再改回来。
-            // UNLK  = &studio_unlock，Studio 被锁定时的备用解锁位（RAISE 层还有一个）。
-            // BASE  = &mo 0，按住临时回到 LAYER_0（ADJUST 被设成基础层时的逃生口）。
+            // BTLDR = enter bootloader; placed at the leftmost GUI position, hard to hit by mistake.
+            // OUT   = &out OUT_TOG, toggles between USB / BLE. Do **not** use &out OUT_USB:
+            //         it is sticky: after switching to it with no cable plugged in there is no output at all,
+            //         the keyboard goes "mute", and it is very hard to undo from the ADJUST layer.
+            // UNLK  = &studio_unlock, a backup unlock position when Studio is locked (RAISE has one too).
+            // BASE  = &mo 0, hold to temporarily return to LAYER_0 (escape hatch when ADJUST is the base layer).
             //
-            // BT_CLR 放在这一层最右侧，远离主键区，避免误触清掉蓝牙配对。
+            // BT_CLR sits at the far right of this layer, away from the main keys, so pairing is not erased by mistake.
 
             bindings = <
 &kp F1        &kp F2  &kp F3     &kp F4    &kp F5     &kp F6        &kp F7        &kp F8    &kp F9      &kp F10      &kp F11      &kp F12

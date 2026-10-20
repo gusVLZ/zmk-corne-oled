@@ -1,4 +1,4 @@
-# 默认入口：依赖下载到 <仓库>/dependencies
+# Default entry point: dependencies are fetched into <repo>/dependencies
 #   cd <repo> && west init -l config
 manifest:
   self:
