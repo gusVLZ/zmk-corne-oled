@@ -11,14 +11,14 @@
 ---
 include:
   # ================= No-display build (largest flash headroom, recommended for daily use) =================
-  - board: nice_nano//zmk
-    shield: corne_left
-    snippets: [corne-no-display, corne-central, studio-rpc-usb-uart]
-    artifact: corne_left
-  - board: nice_nano//zmk
-    shield: corne_right
-    snippets: [corne-no-display, corne-peripheral]
-    artifact: corne_right
+  #- board: nice_nano//zmk
+  #  shield: corne_left
+  #  snippets: [corne-no-display, corne-central, studio-rpc-usb-uart]
+  #  artifact: corne_left
+  #- board: nice_nano//zmk
+  #  shield: corne_right
+  #  snippets: [corne-no-display, corne-peripheral]
+  #  artifact: corne_right
 
   # ================= OLED build =================
   - board: nice_nano//zmk
@@ -33,28 +33,28 @@ include:
   # ================= nice!view build =================
   # corne-no-display disables the onboard OLED (otherwise the SSD1306 driver is still compiled in;
   # nice_view.overlay already points zephyr,display at nice_view)
-  - board: nice_nano//zmk
-    shield: corne_left nice_view_adapter nice_view
-    snippets: [corne-no-display, corne-central, studio-rpc-usb-uart]
-    artifact: corne_left_niceview
-  - board: nice_nano//zmk
-    shield: corne_right nice_view_adapter nice_view
-    snippets: [corne-no-display, corne-peripheral]
-    artifact: corne_right_niceview
+  #- board: nice_nano//zmk
+  #  shield: corne_left nice_view_adapter nice_view
+  #  snippets: [corne-no-display, corne-central, studio-rpc-usb-uart]
+  #  artifact: corne_left_niceview
+  #- board: nice_nano//zmk
+  #  shield: corne_right nice_view_adapter nice_view
+  #  snippets: [corne-no-display, corne-peripheral]
+  #  artifact: corne_right_niceview
 
   # ================= Studio always-unlocked build (no need to unlock each time) =================
   # The default firmware locks Studio after disconnecting; a key must be held to unlock it.
   # The two builds below disable locking, for daily personal use when you do not mind others changing settings.
-  - board: nice_nano//zmk
-    shield: corne_left
-    snippets: [corne-no-display, corne-central, studio-rpc-usb-uart]
-    cmake-args: -DCONFIG_ZMK_STUDIO_LOCKING=n
-    artifact: corne_left_studio_unlocked
-  - board: nice_nano//zmk
-    shield: corne_right
-    snippets: [corne-no-display, corne-peripheral]
-    cmake-args: -DCONFIG_ZMK_STUDIO_LOCKING=n
-    artifact: corne_right_studio_unlocked
+  #- board: nice_nano//zmk
+  #  shield: corne_left
+  #  snippets: [corne-no-display, corne-central, studio-rpc-usb-uart]
+  #  cmake-args: -DCONFIG_ZMK_STUDIO_LOCKING=n
+  #  artifact: corne_left_studio_unlocked
+  #- board: nice_nano//zmk
+  #  shield: corne_right
+  #  snippets: [corne-no-display, corne-peripheral]
+  #  cmake-args: -DCONFIG_ZMK_STUDIO_LOCKING=n
+  #  artifact: corne_right_studio_unlocked
 
   # ================= Settings reset firmware =================
   # Flash this to restore settings broken in DYA Studio to their defaults
